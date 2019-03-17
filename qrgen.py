@@ -8,10 +8,14 @@ from codecs import encode
 def get_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-m", "--mode", help="generation mode (random, incremental, input)", type=str)
-    parser.add_argument("-s", "--size", help="number of bytes", type=int)
-    parser.add_argument("-e", "--seed", help="the rng seed", type=int)
-    parser.add_argument("-b", "--bytes", help="input bytes", type=str)
+    parser.add_argument("-m", "--mode", help="byte generator mode", type=str,
+                        choices=['random', 'window', 'input', 'incremental'])
+    parser.add_argument("-rs", "--random-seed", help="the rng seed (random mode)", type=int)
+    parser.add_argument("-rn", "--random-number", help="number of bytes (random mode)", type=int)
+    parser.add_argument("-wn", "--window-size", help="width of the byte window (window mode)", type=int)
+    parser.add_argument("-ws", "--window-start", help="starting int (window mode)", type=int)
+    parser.add_argument("-we", "--window-end", help="ending int (window mode)", type=int)
+    parser.add_argument("-ib", "--input-bytes", help="input bytes (input mode)", type=str)
 
     argz = parser.parse_args()
 
@@ -27,31 +31,21 @@ def generate_image(bytez):
     return qrcode.make(bytez)
 
 
-def get_bytes(qty, mode, start, end, bytez):
-    if 'random' == mode:
-        return np.random.bytes(qty)
-
-    if 'incremental' == mode:
-        return np.arange(start, end).tobytes()
-
-    if 'input' == mode:
-        return encode(bytez.encode().decode('unicode-escape'), 'raw_unicode_escape')
-
-    return None
-
-
 args = get_args()
 
-if args.seed is not None:
-    np.random.seed(args.seed)
-
-byte_start = 0
-byte_end = 0
-if "incremental" == args.mode:
-    byte_end = args.size - 1
+if args.random_seed is not None:
+    np.random.seed(args.random_seed)
 
 while True:
-    byte_data = get_bytes(qty=args.size, mode=args.mode, start=byte_start, end=byte_end, bytez=args.bytes)
+    byte_data = None
+    if 'random' == args.mode:
+        byte_data = np.random.bytes(args.random_number)
+
+    if 'window' == args.mode:
+        byte_data = np.arange(args.window_start, args.window_end).tobytes()
+
+    if 'input' == args.mode:
+        byte_data = encode(args.input_bytes.encode().decode('unicode-escape'), 'raw_unicode_escape')
 
     print(byte_data)
 
@@ -59,6 +53,6 @@ while True:
     plt.imshow(img)
     plt.show()
 
-    if "incremental" == args.mode:
-        byte_start += 1
-        byte_end += 1
+    if "window" == args.mode:
+        args.window_start += 1
+        args.window_end += 1
