@@ -104,7 +104,6 @@ def get_args():
     parser.add_argument("--background-color", help="background color", type=str)
     parser.add_argument("-rs", "--random-seed", help="the rng seed (random mode)", type=int)
     parser.add_argument("-rn", "--random-number", help="number of bytes (random mode)", type=int)
-    parser.add_argument("-wn", "--window-size", help="width of the byte window (window mode)", type=int)
     parser.add_argument("-ws", "--window-start", help="starting int (window mode)", type=int)
     parser.add_argument("-we", "--window-end", help="ending int (window mode)", type=int)
     parser.add_argument("-ib", "--input-bytes", help="input bytes (input mode)", type=str)
