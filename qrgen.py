@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from codecs import encode
 import sys
 import math
+import io
 
 
 class RandomByteGenerator:
@@ -102,6 +103,7 @@ def get_args():
                         choices=['random', 'window', 'input', 'null', 'incremental'])
     parser.add_argument("--foreground-color", help="foreground color", type=str)
     parser.add_argument("--background-color", help="background color", type=str)
+    parser.add_argument("--output-stdout", help="output image to stdout instead of displaying", action="store_true")
     parser.add_argument("-rs", "--random-seed", help="the rng seed (random mode)", type=int)
     parser.add_argument("-rn", "--random-number", help="number of bytes (random mode)", type=int)
     parser.add_argument("-ws", "--window-start", help="starting int (window mode)", type=int)
@@ -131,12 +133,16 @@ def generate_image(bytez):
     qr.make(fit=True)
 
     return qr.make_image(fill_color=fg_color, back_color=bg_color)
-    # return qrcode.make(bytez)
 
 
-def show_image(image):
-    plt.imshow(image)
-    plt.show()
+def process_image(image):
+    if args.output_stdout:
+        bytez = io.BytesIO()
+        image.save(bytez, format='png')
+        sys.stdout.buffer.write(bytez.getvalue())
+    else:
+        plt.imshow(image)
+        plt.show()
 
 
 def byte_string_to_bytes(byte_string):
@@ -172,6 +178,9 @@ while True:
     print(byte_data)
 
     img = generate_image(byte_data)
-    show_image(img)
+    process_image(img)
 
     byte_generator.iteration_end()
+
+    if 'input' == args.mode:
+        break
