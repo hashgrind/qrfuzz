@@ -38,7 +38,12 @@ class InputByteGenerator:
         self.args = args
 
     def get_bytes(self):
-        return byte_string_to_bytes(self.args.input_bytes)
+        if self.args.input_bytes is not None:
+            return byte_string_to_bytes(self.args.input_bytes)
+        elif self.args.input_file is not None:
+            return open(self.args.input_file, 'rb').read()
+        elif self.args.input_stdin:
+            return sys.stdin.buffer.read()
 
     def iteration_end(self):
         pass
@@ -95,12 +100,16 @@ def get_args():
 
     parser.add_argument("-m", "--mode", help="byte generator mode", type=str,
                         choices=['random', 'window', 'input', 'null', 'incremental'])
+    parser.add_argument("--foreground-color", help="foreground color", type=str)
+    parser.add_argument("--background-color", help="background color", type=str)
     parser.add_argument("-rs", "--random-seed", help="the rng seed (random mode)", type=int)
     parser.add_argument("-rn", "--random-number", help="number of bytes (random mode)", type=int)
     parser.add_argument("-wn", "--window-size", help="width of the byte window (window mode)", type=int)
     parser.add_argument("-ws", "--window-start", help="starting int (window mode)", type=int)
     parser.add_argument("-we", "--window-end", help="ending int (window mode)", type=int)
     parser.add_argument("-ib", "--input-bytes", help="input bytes (input mode)", type=str)
+    parser.add_argument("-if", "--input-file", help="input file (input mode)", type=str)
+    parser.add_argument("-istd", "--input-stdin", help="receive input from stdin (input mode)", action="store_true")
     parser.add_argument("-ni", "--null-input", help="starting bytes (null mode)", type=str)
     parser.add_argument("-nm", "--null-mode", help="null mode", type=str, choices=['start', 'end', 'center', 'spread'])
     parser.add_argument("-nb", "--null-bytes", help="null bytes (null mode)", type=str)
@@ -118,7 +127,12 @@ def get_args():
 
 
 def generate_image(bytez):
-    return qrcode.make(bytez)
+    qr = qrcode.QRCode()
+    qr.add_data(bytez)
+    qr.make(fit=True)
+
+    return qr.make_image(fill_color=fg_color, back_color=bg_color)
+    # return qrcode.make(bytez)
 
 
 def show_image(image):
@@ -131,6 +145,14 @@ def byte_string_to_bytes(byte_string):
 
 
 args = get_args()
+
+
+fg_color = "black"
+if args.foreground_color is not None:
+    fg_color = args.foreground_color
+bg_color = "#FFFFFF"
+if args.background_color is not None:
+    bg_color = args.background_color
 
 
 byte_generator = None
